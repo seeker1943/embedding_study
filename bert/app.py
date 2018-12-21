@@ -13,7 +13,7 @@ from bert.extract_features import model_fn_builder, convert_lst_to_features, Poo
 
 # 获取当前文件的上层路径
 path = os.path.dirname(os.path.abspath(__file__))
-model_dir = path + "/chinese_L-12_H-768_A-12"
+model_dir = "/Users/yucong/PycharmProjects/embedding_bert/chinese_L-12_H-768_A-12"
 config_fp = os.path.join(model_dir, 'bert_config.json')
 checkpoint_fp = os.path.join(model_dir, 'bert_model.ckpt')
 vocab_fp = os.path.join(model_dir, 'vocab.txt')
