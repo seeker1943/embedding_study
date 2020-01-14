@@ -38,12 +38,14 @@ class ELMO:
         # shape = (batch_size, seq_len, embedding_dim)
         embedding_output = self.embedding.forward(data)
         with tf.variable_scope("elmo_rnn_forward"):
+            # shape = (batch_size, seq_len, hidden_size)
             forward_outputs, forward_states = tf.nn.dynamic_rnn(self.forward_cell,
                                                                 inputs=embedding_output,
                                                                 sequence_length=data["input_len"],
                                                                 dtype=tf.float32)
 
         with tf.variable_scope("elmo_rnn_backward"):
+            # shape = (batch_size, seq_len, hidden_size)
             backward_outputs, backward_states = tf.nn.dynamic_rnn(self.backward_cell,
                                                                   inputs=embedding_output,
                                                                   sequence_length=data["input_len"],
@@ -59,11 +61,11 @@ class ELMO:
         return forward_outputs, backward_outputs, forward_projection, backward_projection
 
     def train(self, data, global_step_variable=None):
-        forward_output, backward_output, _, _ = self.forward(data)
+        forward_output, backward_output, forward_projection, backward_projection = self.forward(data)
 
         forward_target = data["target"]
         # shape = (batch_size, seq_len)
-        forward_pred = tf.cast(tf.argmax(tf.nn.softmax(forward_output, -1), -1), tf.int32)
+        forward_pred = tf.cast(tf.argmax(tf.nn.softmax(forward_projection, -1), -1), tf.int32)
         # 类似 auto encoder， 输入是结构化 word_char, 输出是 word
         forward_correct = tf.equal(forward_pred, forward_target)
         forward_padding = tf.sequence_mask(data["target_len"], maxlen=self.seq_len, dtype=tf.float32)
@@ -83,7 +85,7 @@ class ELMO:
         forward_train_loss = tf.reduce_mean(forward_train_loss)
 
         backward_target = tf.reverse_sequence(data["target"], data["target_len"], seq_axis=1, batch_axis=0)
-        backward_pred = tf.cast(tf.argmax(tf.nn.softmax(backward_output, -1), -1), tf.int32)
+        backward_pred = tf.cast(tf.argmax(tf.nn.softmax(backward_projection, -1), -1), tf.int32)
         backward_correct = tf.equal(backward_pred, backward_target)
         backward_padding = tf.sequence_mask(data["target_len"], maxlen=self.seq_len, dtype=tf.float32)
 
